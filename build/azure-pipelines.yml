@@ -1,0 +1,24 @@
+trigger:
+  branches:
+    include:
+    - main
+
+variables:
+- name: windowsHostedAgentImage
+  value: 'windows-2022'
+- name: IsReleaseBranch # Should this branch name use the release stage.
+  value: $[or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))]
+
+stages:
+- stage: OnWindows_
+  jobs:
+  - job: Test Pipeline
+
+    pool:
+      vmImage: $(windowsHostedAgentImage)
+
+    workspace:
+      clean: all # Cleanup the workspace before starting.
+
+    steps:
+    - script: echo Hello world!

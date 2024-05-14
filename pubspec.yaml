@@ -1,0 +1,17 @@
+name: review_service
+description: A multi-platform recipe to rate mobile apps.
+version: 0.1.0+1
+homepage: https://github.com/nventive/ReviewService-Dart
+
+environment:
+  sdk: "^3.3.0"
+  flutter: "^3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  lints: ^3.0.0
