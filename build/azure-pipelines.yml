@@ -1,24 +1,79 @@
 trigger:
   branches:
     include:
-    - main
+      - main
+pr:
+  branches:
+    include:
+      - main
 
 variables:
-- name: windowsHostedAgentImage
-  value: 'windows-2022'
-- name: IsReleaseBranch # Should this branch name use the release stage.
-  value: $[or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/feature/'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))]
+- template: variables.yml
+  
+pool:
+  vmImage: 'ubuntu-latest'
 
-stages:
-- stage: OnWindows_
-  jobs:
-  - job: Test Pipeline
+steps:
 
-    pool:
-      vmImage: $(windowsHostedAgentImage)
+  - task: Hey24sheep.flutter.flutter-install.FlutterInstall@0  
+    displayName: 'Flutter Install'
 
-    workspace:
-      clean: all # Cleanup the workspace before starting.
+  - task: gitversion/setup@0
+    retryCountOnTaskFailure: 3
+    inputs:
+      versionSpec: '5.12.0'
+    displayName: 'Install GitVersion'
 
-    steps:
-    - script: echo Hello world!
+  - task: gitversion/execute@0
+    inputs:
+      useConfigFile: true
+      configFilePath: $(Build.SourcesDirectory)/build/gitversion-config.yml
+    displayName: 'Calculate App Version'
+
+  - task: PowerShell@2
+    displayName: 'Set Package Version'
+    inputs:
+      targetType: 'inline'
+      script: |
+        $(DartToolPath)/dart pub global activate cider
+        $(DartToolPath)/dart pub global run cider version $(GitVersion.MajorMinorPatch)
+    
+  # There is currently no other alternatives for setting the app version using gitversion.
+  - powershell: |
+      ((Get-Content -Path pubspec.yaml) -replace '(version:\s*)[\d\.]+', "version: $(GitVersion.MajorMinorPatch)") | Set-Content -Path pubspec.yaml
+    displayName: Replace version powershell command 
+
+  - script :  flutter doctor
+    displayName : Run flutter doctor
+
+  - script: flutter pub get
+    displayName: Install dependencies
+
+  - script: flutter analyze
+    displayName: Analyze code
+
+  - script: flutter build
+    displayName: Build app
+
+  - script: flutter test
+    displayName: Run tests
+
+  - script: flutter pub publish --dry-run
+    displayName: 'Run flutter pub publish --dry-run'
+
+  - task: DownloadSecureFile@1
+    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['IsReleaseBranch'], 'true'))
+    inputs:
+      secureFile: 'flutter_publisher_gckey.json'
+    name: DownloadGCloudKey
+
+  - script: | 
+      gcloud auth activate-service-account --key-file=$(DownloadGCloudKey.secureFilePath)
+      gcloud auth print-identity-token --audiences=https://pub.dev | dart pub token add https://pub.dev
+      dart pub publish --force
+    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['IsReleaseBranch'], 'true'))
+    displayName: 'Publish to pub.dev as a nventive publisher'
+
+  - task: PostBuildCleanup@3
+    displayName: 'Post-Build Cleanup: Cleanup files to keep build server clean!'
+    condition: always()

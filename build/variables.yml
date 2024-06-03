@@ -1,0 +1,7 @@
+variables:
+  IsReleaseBranch: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+  
+  # Pipeline configuration (Disable shallow fetch).
+  # See https://dev.to/kkazala/azure-devops-pipelines-shallow-fetch-1-is-now-default-4656 for more details.
+  # See https://learn.microsoft.com/en-us/azure/devops/pipelines/repos/pipeline-options-for-git?view=azure-devops&tabs=yaml#shallow-fetch for more details.
+  Agent.Source.Git.ShallowFetchDepth: 0
