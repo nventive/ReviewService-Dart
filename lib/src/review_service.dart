@@ -4,6 +4,4 @@
 class ReviewService {
   /// {@macro review_service}
   const ReviewService();
-
-  SomethingWrong;?
 }
