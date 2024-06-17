@@ -28,6 +28,7 @@ migrate_working_dir/
 .packages
 .pub-cache/
 .pub/
+build/
 pubspec.lock
 
 # Web related
@@ -41,3 +42,6 @@ app.*.map.json
 
 # Test related
 coverage
+
+# Mockito generated files.
+*.mocks.dart
