@@ -27,7 +27,7 @@ steps:
   - task: gitversion/execute@0
     inputs:
       useConfigFile: true
-      configFilePath: $(Build.SourcesDirectory)/build/gitversion-config.yml
+      configFilePath: .azuredevops/gitversion-config.yml
     displayName: 'Calculate App Version'
 
   - task: PowerShell@2

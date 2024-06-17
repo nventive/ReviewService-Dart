@@ -10,8 +10,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  in_app_review: ^2.0.9
+  logger: ^2.3.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   lints: ^3.0.0
+  mockito: ^5.4.4
+  build_runner: ^2.4.8
