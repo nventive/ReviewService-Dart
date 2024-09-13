@@ -12,15 +12,16 @@ Before getting started, please read the [Android](https://developer.android.com/
 
 ## Getting Started
 
-1. Add the `ReviewService` package to your project.
+1. Add the `review_service` package to your project.
 
 2. Create an instance of `ReviewService`. We'll cover dependency injection in details later on in this documentation.
    ```dart
-   var reviewConditionsBuilder =
-      ReviewConditionsBuilder.empty().minimumPrimaryActionsCompleted(1);
+   var reviewConditionsBuilder = ReviewConditionsBuilderImplementation
+      .empty()
+      .minimumPrimaryActionsCompleted(1);
 
    var reviewPrompter = LoggingReviewPrompter();
-   var reviewSettingsSource = MemoryReviewSettingsSource<ReviewSettings>();
+   var reviewSettingsSource = MemoryReviewSettingsSource<ReviewSettings>(() => const ReviewSettings());
 
    var reviewService = ReviewService<ReviewSettings>(
       logger: Logger(),
@@ -90,169 +91,11 @@ Here is a simple code that does dependency injection using `get_it`.
    getIt.registerSingleton<ReviewPrompter>(ReviewPrompter());
 ```
 
-### Adding your CustomReviewSettings
-
-First let's declare a new ReviewSettings named CustomReviewSettings with a favoriteJokesCount to track how many jokes were favorited in an hypothetical dad jokes application
-
-```dart 
-  class CustomReviewSettings extends ReviewSettings {
-    final int favoriteJokesCount;
-
-    const CustomReviewSettings({
-      this.favoriteJokesCount = 0,
-      super.primaryActionCompletedCount = 0,
-      super.secondaryActionCompletedCount = 0,
-      super.applicationLaunchCount = 0,
-      super.firstApplicationLaunch,
-      super.requestCount = 0,
-      super.lastRequest,
-    });
-
-    @override
-    CustomReviewSettings copyWith({
-      int? primaryActionCompletedCount,
-      int? secondaryActionCompletedCount,
-      int? applicationLaunchCount,
-      DateTime? firstApplicationLaunch,
-      int? requestCount,
-      DateTime? lastRequest,
-    }) {
-      return CustomReviewSettings(
-        primaryActionCompletedCount:
-            primaryActionCompletedCount ?? this.primaryActionCompletedCount,
-        secondaryActionCompletedCount:
-            secondaryActionCompletedCount ?? this.secondaryActionCompletedCount,
-        applicationLaunchCount:
-            applicationLaunchCount ?? this.applicationLaunchCount,
-        firstApplicationLaunch:
-            firstApplicationLaunch ?? this.firstApplicationLaunch,
-        requestCount: requestCount ?? this.requestCount,
-        lastRequest: lastRequest ?? this.lastRequest,
-        favoriteJokesCount: favoriteJokesCount,
-      );
-    }
-
-    CustomReviewSettings copyWithFavorite(int favoriteCount) {
-      return CustomReviewSettings(
-        primaryActionCompletedCount: super.primaryActionCompletedCount,
-        secondaryActionCompletedCount: super.secondaryActionCompletedCount,
-        applicationLaunchCount: super.applicationLaunchCount,
-        firstApplicationLaunch: super.firstApplicationLaunch,
-        requestCount: super.requestCount,
-        lastRequest: super.lastRequest,
-        favoriteJokesCount: favoriteCount,
-      );
-    }
-  }
-```
-
-Notes : 
-  1. It's important you define a copyWith that overrides the one from the ReviewSettings class while returning the newly added property. This ensures that the calls made to the copyWith method of ReviewSettings will be overriden by your implementation
-  2. You need to define a copyWith method that returns the parent reviewSettings value along with your new property passed as a parameter. This method will be used when you will track your review settings further down the line. 
-
-Once you've defined your new custom review settings you need to add an extension to the ReviewConditionsBuilder like this :
-```dart
-  extension CustomReviewConditionsBuilderExtensions
-      on ReviewConditionsBuilder<CustomReviewSettings> {
-    ReviewConditionsBuilder<CustomReviewSettings> minimumJokesFavorited(
-      int minimumJokesFavorited,
-    ) {
-      conditions.add(
-        SynchronousReviewCondition<CustomReviewSettings>(
-          (reviewSettings, currentDateTime) =>
-              reviewSettings.favoriteJokesCount >= minimumJokesFavorited,
-        ),
-      );
-      return this;
-    }
-  }
-```
-
-Notes:
-  1. You need to specify that the ReviewConditionsBuilder takes your new CustomReviewSettings and not the generic since you want to used your newly added property. 
-
-Then you need to register your service with the extended ReviewConditionsBuilder and the new review settings like this :
-```dart
-  var logger = Logger();
-  var reviewConditionsBuilder =
-      ReviewConditionsBuilderImplementation<CustomReviewSettings>()
-          .minimumJokesFavorited(3);
-
-  var reviewSettingsSource =
-    GetIt.I.registerSingleton<ReviewSettingsSource<CustomReviewSettings>>(
-      MemoryReviewSettingsSource<CustomReviewSettings>(
-        () => const CustomReviewSettings(),
-      ),
-    );
-
-  GetIt.I.registerSingleton(
-    ReviewService<CustomReviewSettings>(
-      logger: logger,
-      reviewPrompter: ReviewPrompter(logger: logger),
-      reviewSettingsSource: reviewSettingsSource,
-      reviewConditionsBuilder: reviewConditionsBuilder,
-    ),
-  );
-```
-
-Notes:
-  1. You need to specify again that you want the conditions builder the settings source and the service to use your CustomReviewSettings and not the generic.  
-  2. We recommend that you define your own interface that wraps `ReviewService<CustomReviewSettings>` to make the usage code leaner and ease any potential refactorings.
-  ```dart
-    /// This interface wraps ReviewService<CustomReviewSettings> so that you don't have to repeat the generic parameter everywhere that you would use the review service.
-    /// In other words, you should use this interface in the app instead of ReviewService<CustomReviewSettings> because it's leaner.
-    class CustomReviewService implements ReviewService<CustomReviewSettings> {
-      late ReviewService<CustomReviewSettings> _reviewService;
-
-      CustomReviewService(ReviewService<CustomReviewSettings> reviewService) {
-        _reviewService = reviewService;
-      }
-
-      @override
-      Future<bool> getAreConditionsSatisfied() async {
-        return await _reviewService.getAreConditionsSatisfied();
-      }
-
-      @override
-      Future<void> tryRequestReview() async {
-        await _reviewService.tryRequestReview();
-      }
-
-      @override
-      Future<void> updateReviewSettings(
-        CustomReviewSettings Function(CustomReviewSettings p1) updateFunction,
-      ) async {
-        await _reviewService.updateReviewSettings(updateFunction);
-      }
-    }
-  ```
-
-After creating your own implementation of the ReviewService you just need to register it like this :
-```dart
-  GetIt.I.registerSingleton(
-    CustomReviewService(
-      ReviewService<CustomReviewSettings>(
-        logger: logger,
-        reviewPrompter: ReviewPrompter(logger: logger),
-        reviewSettingsSource: reviewSettingsSource,
-        reviewConditionsBuilder: reviewConditionsBuilder,
-      ),
-    ),
-  );
-```
-
-And use it like that :
-```dart
-  await GetIt.I.get<CustomReviewService>().trackFavoriteJokesCount();
-```
-
-now you're all set to track how many jokes are favorited in your app and prompt for a review once your review conditions are meant (3 favorite jokes in this case).
-
 ## Features
 
 Now that everything is setup, Let's see what else we can do!
 
-### Tack Application Events
+### Track Application Events
 
 To track the provided review settings you can use the following `ReviewService` extensions.
 > 💡 The review request count and the last review request are automatically tracked by the service.
@@ -340,21 +183,181 @@ var reviewConditionsBuilder =
 
 ```
 
+### Add Custom Tracking Data
+
+First let's declare a new `ReviewSettings` named `CustomReviewSettings` with a `favoriteJokesCount` to track how many jokes were favorited in an hypothetical dad jokes application
+
+```dart 
+  class CustomReviewSettings extends ReviewSettings {
+    final int favoriteJokesCount;
+
+    const CustomReviewSettings({
+      this.favoriteJokesCount = 0,
+      super.primaryActionCompletedCount = 0,
+      super.secondaryActionCompletedCount = 0,
+      super.applicationLaunchCount = 0,
+      super.firstApplicationLaunch,
+      super.requestCount = 0,
+      super.lastRequest,
+    });
+
+    @override
+    CustomReviewSettings copyWith({
+      int? primaryActionCompletedCount,
+      int? secondaryActionCompletedCount,
+      int? applicationLaunchCount,
+      DateTime? firstApplicationLaunch,
+      int? requestCount,
+      DateTime? lastRequest,
+    }) {
+      return CustomReviewSettings(
+        primaryActionCompletedCount:
+            primaryActionCompletedCount ?? this.primaryActionCompletedCount,
+        secondaryActionCompletedCount:
+            secondaryActionCompletedCount ?? this.secondaryActionCompletedCount,
+        applicationLaunchCount:
+            applicationLaunchCount ?? this.applicationLaunchCount,
+        firstApplicationLaunch:
+            firstApplicationLaunch ?? this.firstApplicationLaunch,
+        requestCount: requestCount ?? this.requestCount,
+        lastRequest: lastRequest ?? this.lastRequest,
+        favoriteJokesCount: favoriteJokesCount,
+      );
+    }
+
+    CustomReviewSettings copyWithFavorite(int favoriteCount) {
+      return CustomReviewSettings(
+        primaryActionCompletedCount: super.primaryActionCompletedCount,
+        secondaryActionCompletedCount: super.secondaryActionCompletedCount,
+        applicationLaunchCount: super.applicationLaunchCount,
+        firstApplicationLaunch: super.firstApplicationLaunch,
+        requestCount: super.requestCount,
+        lastRequest: super.lastRequest,
+        favoriteJokesCount: favoriteCount,
+      );
+    }
+  }
+```
+
+> ⚠ Notes : 
+> 1. It's important you define a `copyWith` that overrides the one from the `ReviewSettings` class while returning the newly added property. This ensures that the calls made to the `copyWith` method of `ReviewSettings` will be overriden by your implementation
+> 2. You need to define a `copyWith` method that returns the superclass `ReviewSettings` value along with your new property passed as a parameter. This method will be used when you will track your review settings further down the line. 
+
+Once you've defined your new custom review settings, it is recommended to add an extension to the `ReviewConditionsBuilder` for uniformity :
+
+```dart
+  extension CustomReviewConditionsBuilderExtensions
+      on ReviewConditionsBuilder<CustomReviewSettings> {
+    ReviewConditionsBuilder<CustomReviewSettings> minimumJokesFavorited(
+      int minimumJokesFavorited,
+    ) {
+      conditions.add(
+        SynchronousReviewCondition<CustomReviewSettings>(
+          (reviewSettings, currentDateTime) =>
+              reviewSettings.favoriteJokesCount >= minimumJokesFavorited,
+        ),
+      );
+      return this;
+    }
+  }
+```
+
+> ⚠ Notes :
+> You need to specify that the `ReviewConditionsBuilder` takes your new  `CustomReviewSettings` and not the default `ReviewSettings` since you want to use your newly added property. 
+
+Then you need to register your service with the extended `ReviewConditionsBuilder` and the new review settings like this :
+```dart
+  var logger = Logger();
+  var reviewConditionsBuilder =
+      ReviewConditionsBuilderImplementation<CustomReviewSettings>()
+          .minimumJokesFavorited(3);
+
+  var reviewSettingsSource =
+    GetIt.I.registerSingleton<ReviewSettingsSource<CustomReviewSettings>>(
+      MemoryReviewSettingsSource<CustomReviewSettings>(
+        () => const CustomReviewSettings(),
+      ),
+    );
+
+  GetIt.I.registerSingleton(
+    ReviewService<CustomReviewSettings>(
+      logger: logger,
+      reviewPrompter: ReviewPrompter(logger: logger),
+      reviewSettingsSource: reviewSettingsSource,
+      reviewConditionsBuilder: reviewConditionsBuilder,
+    ),
+  );
+```
+
+> ⚠ Notes :
+> 1. You need to specify again that you want the conditions builder the settings source and the service to use your `CustomReviewSettings` and not the generic.  
+> 2. We recommend that you define your own interface that wraps `ReviewService<CustomReviewSettings>` to make the usage code leaner and ease any potential refactorings.
+
+  ```dart
+    /// This interface wraps ReviewService<CustomReviewSettings> so that you don't have to repeat the generic parameter everywhere that you would use the review service.
+    /// In other words, you should use this interface in the app instead of ReviewService<CustomReviewSettings> because it's leaner.
+    class CustomReviewService implements ReviewService<CustomReviewSettings> {
+      late ReviewService<CustomReviewSettings> _reviewService;
+
+      CustomReviewService(ReviewService<CustomReviewSettings> reviewService) {
+        _reviewService = reviewService;
+      }
+
+      @override
+      Future<bool> getAreConditionsSatisfied() async {
+        return await _reviewService.getAreConditionsSatisfied();
+      }
+
+      @override
+      Future<void> tryRequestReview() async {
+        await _reviewService.tryRequestReview();
+      }
+
+      @override
+      Future<void> updateReviewSettings(
+        CustomReviewSettings Function(CustomReviewSettings p1) updateFunction,
+      ) async {
+        await _reviewService.updateReviewSettings(updateFunction);
+      }
+    }
+  ```
+
+After creating your own implementation of the ReviewService you just need to register it like this :
+```dart
+  GetIt.I.registerSingleton(
+    CustomReviewService(
+      ReviewService<CustomReviewSettings>(
+        logger: logger,
+        reviewPrompter: ReviewPrompter(logger: logger),
+        reviewSettingsSource: reviewSettingsSource,
+        reviewConditionsBuilder: reviewConditionsBuilder,
+      ),
+    ),
+  );
+```
+
+And use it like that :
+```dart
+  await GetIt.I.get<CustomReviewService>().trackFavoriteJokesCount();
+```
+
+Now you're all set to track how many jokes are favorited in your app and prompt for a review once your review conditions are meant (3 favorite jokes in this case).
+
 ## Testing
 
 This is what you need to know before testing and debugging this service. Please note that this may change and you should always refer to the [Apple](https://developer.apple.com/documentation/storekit/skstorereviewcontroller/3566727-requestreview#4278434) and [Android](https://developer.android.com/guide/playcore/in-app-review/test) documentation for the most up-to-date information.
 
-### Android TODO : check if this is still true with the in_app_review package
+### Android
 
 - You can't test this service while debugging the application, the prompt won't show up. To test it, you need to use the [internal application sharing](https://play.google.com/console/about/internalappsharing/) or the internal testing feature in Google Play Console. See [this](https://developer.android.com/guide/playcore/in-app-review/test) for more details.
 - You can't use a Google Suite account on Google Play to review an application because the prompt will not show up.
 
-### iOS TODO : check if this is still true with the in_app_review package
+### iOS
 
 - You can test on a real device or on a simulator.
 - You can test this service only while debugging the application (It won't show up on TestFlight).
 
-## Acknowledgements TODO Change for in app review package
+## Acknowledgements
 
 Take a look at [in_app_review](https://github.com/britannio/in_app_review) that we use to prompt for review.
 
