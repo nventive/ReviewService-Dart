@@ -1,7 +1,8 @@
 name: review_service
 description: A multi-platform recipe to rate mobile apps.
-version: 0.1.0+1
+version: 0.9.9 # The version will be overriden in the CI following semantic versioning.
 homepage: https://github.com/nventive/ReviewService-Dart
+repository: https://github.com/nventive/ReviewService-Dart
 
 environment:
   sdk: "^3.3.0"
