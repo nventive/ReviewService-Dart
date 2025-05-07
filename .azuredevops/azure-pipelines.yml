@@ -11,36 +11,35 @@ variables:
   - template: variables.yml
 
 pool:
-  vmImage: "ubuntu-latest"
+  vmImage: ubuntu-latest
 
 steps:
   - task: Hey24sheep.flutter.flutter-install.FlutterInstall@0
     displayName: "Flutter Install"
 
   - task: gitversion/setup@0
-    retryCountOnTaskFailure: 3
     inputs:
-      versionSpec: "5.12.0"
-    displayName: "Install GitVersion"
+      versionSpec: '5.12.0'
+    displayName: 'Install GitVersion'
 
   - task: gitversion/execute@0
     inputs:
       useConfigFile: true
       configFilePath: .azuredevops/gitversion-config.yml
-    displayName: "Calculate App Version"
+    displayName: 'Calculate version'
 
-  - task: PowerShell@2
-    displayName: "Set Package Version"
-    inputs:
-      targetType: "inline"
-      script: |
-        $(DartToolPath)/dart pub global activate cider
-        $(DartToolPath)/dart pub global run cider version $(GitVersion.MajorMinorPatch)
-
-  # There is currently no other alternatives for setting the app version using gitversion.
+  # Update the version in pubspec.yaml
   - powershell: |
       ((Get-Content -Path pubspec.yaml) -replace '(version:\s*)[\d\.]+', "version: $(GitVersion.MajorMinorPatch)") | Set-Content -Path pubspec.yaml
-    displayName: Replace version powershell command
+    displayName: Update version in pubspec.yaml
+
+  # Temporarily commit the updated pubspec.yaml
+  - script: |
+      git config user.name "Azure DevOps"
+      git config user.email "devops@example.com"
+      git add pubspec.yaml
+      git commit -m "Update version to $(GitVersion.MajorMinorPatch) for CI"
+    displayName: Commit updated pubspec.yaml
 
   - script: flutter doctor
     displayName: Run flutter doctor
@@ -65,21 +64,26 @@ steps:
     displayName: Run tests
 
   - script: flutter pub publish --dry-run
-    displayName: "Run flutter pub publish --dry-run"
+    displayName: 'Run flutter pub publish --dry-run'
 
   - task: DownloadSecureFile@1
     condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['IsReleaseBranch'], 'true'))
     inputs:
-      secureFile: "flutter_publisher_gckey.json"
+      secureFile: 'flutter_publisher_gckey.json'
     name: DownloadGCloudKey
 
-  - script: |
+  - script: | 
       gcloud auth activate-service-account --key-file=$(DownloadGCloudKey.secureFilePath)
       gcloud auth print-identity-token --audiences=https://pub.dev | dart pub token add https://pub.dev
       dart pub publish --force
     condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['IsReleaseBranch'], 'true'))
-    displayName: "Publish to pub.dev as a nventive publisher"
+    displayName: 'Publish to pub.dev as a nventive publisher'
+
+  # Reset the repository to its original state
+  - script: |
+      git reset --hard HEAD~1
+    displayName: Reset repository to clean state
 
   - task: PostBuildCleanup@3
-    displayName: "Post-Build Cleanup: Cleanup files to keep build server clean!"
+    displayName: 'Post-Build Cleanup: Cleanup files to keep build server clean!'
     condition: always()
