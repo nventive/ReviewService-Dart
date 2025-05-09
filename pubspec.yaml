@@ -1,5 +1,5 @@
 name: review_service
-description: A multi-platform recipe to rate mobile apps.
+description: "A multi-platform Dart package to prompt users for app reviews, with logging support."
 version: 0.9.9 # The version will be overriden in the CI following semantic versioning.
 homepage: https://github.com/nventive/ReviewService-Dart
 repository: https://github.com/nventive/ReviewService-Dart

@@ -1,7 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+
+## 0.4.3
+
+- Added a complete example in the `example` directory to comply with pub.dev guidelines and improve usability.
+- Enhanced the `description` field in `pubspec.yaml` for better clarity and alignment with pub.dev scoring requirements.
+- Fixed formatting issues to ensure compliance with Dart and Flutter linter rules.
+- Improved pub.dev's quality standards.
 
 ## 0.4.2
 

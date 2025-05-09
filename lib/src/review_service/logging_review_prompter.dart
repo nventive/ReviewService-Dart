@@ -5,7 +5,7 @@ import 'package:review_service/src/review_service/review_prompter.dart';
 final class LoggingReviewPrompter implements ReviewPrompter {
   final Logger logger;
 
-  /// Initializes a new instance of the <see cref="LoggingReviewPrompter"/> class.
+  /// Initializes a new instance of the cref="LoggingReviewPrompter" class.
   LoggingReviewPrompter({Logger? logger}) : logger = logger ?? Logger();
 
   @override

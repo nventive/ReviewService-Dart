@@ -65,7 +65,8 @@ final class _ReviewService<TReviewSettings extends ReviewSettings>
 
       _logger.i('Review requested.');
     } else {
-      _logger.i('Failed to request a review because one or more conditions were not satisfied.');
+      _logger.i(
+          'Failed to request a review because one or more conditions were not satisfied.');
     }
   }
 
@@ -74,20 +75,23 @@ final class _ReviewService<TReviewSettings extends ReviewSettings>
     _logger.d('Evaluating conditions.');
 
     final currentSettings = await _reviewSettingsSource.read();
-    final reviewConditionTasks = _reviewConditions.map((condition) => condition.validate(currentSettings, DateTime.now()));
+    final reviewConditionTasks = _reviewConditions.map(
+        (condition) => condition.validate(currentSettings, DateTime.now()));
     final result = (await Future.wait(reviewConditionTasks)).every((x) => x);
 
     if (result) {
       _logger.i('Evaluated conditions and all conditions are satisfied.');
     } else {
-      _logger.i('Evaluted conditions and one or more conditions were not satisfied.');
+      _logger.i(
+          'Evaluated conditions and one or more conditions were not satisfied.');
     }
 
     return result;
   }
 
   @override
-  Future<void> updateReviewSettings(TReviewSettings Function(TReviewSettings) updateFunction) async {
+  Future<void> updateReviewSettings(
+      TReviewSettings Function(TReviewSettings) updateFunction) async {
     _logger.d('Updating review settings.');
 
     final currentSettings = await _reviewSettingsSource.read();
