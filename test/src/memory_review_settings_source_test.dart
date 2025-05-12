@@ -13,7 +13,8 @@ void main() {
       'MemoryReviewSettingSource should not return null when reading from a new instance',
       () async {
     // Arrange
-    var source = MemoryReviewSettingsSource<ReviewSettings>(() => ReviewSettings());
+    var source =
+        MemoryReviewSettingsSource<ReviewSettings>(() => ReviewSettings());
 
     // Act
     var result = await source.read();
@@ -25,7 +26,8 @@ void main() {
       'MemoryReviewSettingSource should return the same value that was written when reading',
       () async {
     // Arrange
-    var source = MemoryReviewSettingsSource<ReviewSettings>(() => ReviewSettings());
+    var source =
+        MemoryReviewSettingsSource<ReviewSettings>(() => ReviewSettings());
     var value = ReviewSettings(requestCount: 10);
 
     await source.write(value);
@@ -37,20 +39,22 @@ void main() {
     expect(result, value);
   });
 
-    test(
+  test(
       'MemoryReviewSettingsSource should retain updated value from CustomReviewSetings when tracking application launched',
       () async {
     // Arrange
-    var source = MemoryReviewSettingsSource<CustomReviewSettings>(() => CustomReviewSettings());
+    var source = MemoryReviewSettingsSource<CustomReviewSettings>(
+        () => CustomReviewSettings());
 
-    var reviewConditionBuilder = ReviewConditionsBuilderImplementation<CustomReviewSettings>().minimumApplicationLaunchCount(1);
+    var reviewConditionBuilder =
+        ReviewConditionsBuilderImplementation<CustomReviewSettings>()
+            .minimumApplicationLaunchCount(1);
 
     var reviewService = ReviewService<CustomReviewSettings>(
-      logger: Logger(),
-      reviewSettingsSource: source,
-      reviewConditionsBuilder: reviewConditionBuilder,
-      reviewPrompter: LoggingReviewPrompter()
-    );
+        logger: Logger(),
+        reviewSettingsSource: source,
+        reviewConditionsBuilder: reviewConditionBuilder,
+        reviewPrompter: LoggingReviewPrompter());
 
     // Act
     await reviewService.updateReviewSettings((reviewSettings) {
@@ -66,7 +70,6 @@ void main() {
     expect(result.applicationLaunchCount, 1);
   });
 }
-
 
 class CustomReviewSettings extends ReviewSettings {
   final int favoriteJokesCount;

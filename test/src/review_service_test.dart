@@ -13,7 +13,7 @@ import 'review_service_test.mocks.dart';
 @GenerateNiceMocks([MockSpec<ReviewPrompter>()])
 void main() {
   /// We need this because we are using maxInteger in the test cases.
-  const int maxInteger =  0x7FFFFFFFFFFFFFFF;
+  const int maxInteger = 0x7FFFFFFFFFFFFFFF;
 
   late MockReviewPrompter reviewPrompterMock;
 
@@ -23,7 +23,7 @@ void main() {
       'areConditionsSatisfied': false,
     },
     {
-      'reviewSettings':  ReviewSettings(
+      'reviewSettings': ReviewSettings(
         firstApplicationLaunch: DateTime.fromMillisecondsSinceEpoch(0),
         applicationLaunchCount: maxInteger,
         primaryActionCompletedCount: maxInteger,
@@ -42,26 +42,28 @@ void main() {
     },
   ];
 
-    setUp(() {
-      reviewPrompterMock = MockReviewPrompter();
+  setUp(() {
+    reviewPrompterMock = MockReviewPrompter();
 
-      when(reviewPrompterMock.tryPrompt()).thenAnswer((_) async {});
-    });
+    when(reviewPrompterMock.tryPrompt()).thenAnswer((_) async {});
+  });
 
-    for (var testCase in testCases) {
-      test('Prompt Review When Conditions Are Satisfied', () async {
+  for (var testCase in testCases) {
+    test('Prompt Review When Conditions Are Satisfied', () async {
       // Arrange.
-      var reviewConditionsBuilder = ReviewConditionsBuilderImplementation.defaultBuilder();
-      var reviewSettingsSource = MemoryReviewSettingsSource<ReviewSettings>(() => ReviewSettings());
+      var reviewConditionsBuilder =
+          ReviewConditionsBuilderImplementation.defaultBuilder();
+      var reviewSettingsSource =
+          MemoryReviewSettingsSource<ReviewSettings>(() => ReviewSettings());
 
-      await reviewSettingsSource.write(testCase['reviewSettings'] as ReviewSettings);
+      await reviewSettingsSource
+          .write(testCase['reviewSettings'] as ReviewSettings);
 
       var reviewService = ReviewService<ReviewSettings>(
-        logger: Logger(),
-        reviewPrompter: reviewPrompterMock,
-        reviewSettingsSource: reviewSettingsSource,
-        reviewConditionsBuilder: reviewConditionsBuilder
-      );
+          logger: Logger(),
+          reviewPrompter: reviewPrompterMock,
+          reviewSettingsSource: reviewSettingsSource,
+          reviewConditionsBuilder: reviewConditionsBuilder);
 
       // Act.
       await reviewService.tryRequestReview();
@@ -75,6 +77,5 @@ void main() {
         verifyNever(reviewPrompterMock.tryPrompt());
       }
     });
-    }
-    
+  }
 }

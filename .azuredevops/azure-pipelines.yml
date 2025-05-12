@@ -57,9 +57,6 @@ steps:
   - script: flutter analyze
     displayName: Analyze code
 
-  - script: flutter build
-    displayName: Build app
-
   - script: flutter test
     displayName: Run tests
 

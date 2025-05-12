@@ -9,7 +9,8 @@ class AsynchronousReviewCondition<TReviewSettings extends ReviewSettings>
   AsynchronousReviewCondition(this._condition);
 
   @override
-  Future<bool> validate(TReviewSettings currentSettings, DateTime currentDateTime) {
+  Future<bool> validate(
+      TReviewSettings currentSettings, DateTime currentDateTime) {
     return _condition(currentSettings, currentDateTime);
   }
 }

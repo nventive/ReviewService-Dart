@@ -27,9 +27,9 @@ final class ReviewConditionsBuilderImplementation<
   static ReviewConditionsBuilder<TReviewSettings>
       defaultBuilder<TReviewSettings extends ReviewSettings>() {
     return ReviewConditionsBuilderImplementation<TReviewSettings>()
-      .minimumApplicationLaunchCount(3)
-      .minimumElapsedTimeSinceApplicationFirstLaunch(const Duration(days: 5))
-      .minimumPrimaryActionsCompleted(2)
-      .minimumElapsedTimeSinceLastReviewRequest(const Duration(days: 15));
+        .minimumApplicationLaunchCount(3)
+        .minimumElapsedTimeSinceApplicationFirstLaunch(const Duration(days: 5))
+        .minimumPrimaryActionsCompleted(2)
+        .minimumElapsedTimeSinceLastReviewRequest(const Duration(days: 15));
   }
 }

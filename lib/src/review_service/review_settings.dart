@@ -36,10 +36,14 @@ class ReviewSettings {
     DateTime? lastRequest,
   }) {
     return ReviewSettings(
-      primaryActionCompletedCount: primaryActionCompletedCount ?? this.primaryActionCompletedCount,
-      secondaryActionCompletedCount: secondaryActionCompletedCount ?? this.secondaryActionCompletedCount,
-      applicationLaunchCount: applicationLaunchCount ?? this.applicationLaunchCount,
-      firstApplicationLaunch: firstApplicationLaunch ?? this.firstApplicationLaunch,
+      primaryActionCompletedCount:
+          primaryActionCompletedCount ?? this.primaryActionCompletedCount,
+      secondaryActionCompletedCount:
+          secondaryActionCompletedCount ?? this.secondaryActionCompletedCount,
+      applicationLaunchCount:
+          applicationLaunchCount ?? this.applicationLaunchCount,
+      firstApplicationLaunch:
+          firstApplicationLaunch ?? this.firstApplicationLaunch,
       requestCount: requestCount ?? this.requestCount,
       lastRequest: lastRequest ?? this.lastRequest,
     );
