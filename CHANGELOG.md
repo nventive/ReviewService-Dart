@@ -3,6 +3,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## 0.4.4
+
+- Added library export file (`lib/review_service.dart`) to properly expose package APIs.
+- Updated package dependencies to latest compatible versions:
+  - `in_app_review` from ^2.0.9 to ^2.0.11
+  - `logger` from ^2.3.0 to ^2.6.2
+  - `lints` from ^3.0.0 to ^6.0.0
+  - `mockito` from ^5.4.4 to ^5.6.1
+  - `build_runner` from ^2.4.8 to ^2.10.4
+
 ## 0.4.3
 
 - Added a complete example in the `example` directory to comply with pub.dev guidelines and improve usability.
